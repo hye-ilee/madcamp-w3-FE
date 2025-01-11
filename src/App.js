@@ -93,7 +93,7 @@ const App = () => {
       return;
     }
     const featuresList = await fetchCategoryData(activeCategories);
-
+    console.log('Fetched featuresList:', featuresList);
     const coloredFeatures = featuresList.map((feature) => {
       if (activeCategories.includes('all')) {
         const allCat = categories.find((cat) => cat.id === 'all');
@@ -107,6 +107,16 @@ const App = () => {
       } 
       return feature;
     });
+    
+    const coordsDict = coloredFeatures.reduce((acc, feature) => {
+      const coordKey = feature.geometry.coordinates?.join(',');
+      if (!acc[coordKey]) {
+        acc[coordKey] = [];
+      }
+      acc[coordKey].push(feature);
+      return acc;
+    }, {});
+
     const newMarkers = coloredFeatures.map((feature) => {
       const [lng, lat] = feature.geometry.coordinates;
       const circle = document.createElement('div');
@@ -117,18 +127,16 @@ const App = () => {
       circle.style.borderRadius = '50%';
       circle.style.backgroundColor = feature.color;
 
+      const coordKey = feature.geometry.coordinates?.join(',');
       const popupHtml = `
         <div style="min-width:150px;">
-          <h3 style="margin:5px 0;">${feature.properties.title}</h3>
-          <a href="${feature.properties.url}" 
-            target="_blank" 
-            rel="noopener noreferrer">
-            Go to link
-          </a>
+          ${Object.values(coordsDict[coordKey]).map((feat) => `
+            <h3 style="margin:5px 0;">${feat.properties.title}</h3>
+            <a href="${feat.properties.url}" target="_blank" rel="noopener noreferrer">Go to link</a>
+          `).join('<hr />')}
         </div>
       `;
-      const popup = new mapboxgl.Popup({ offset: 8 })
-        .setHTML(popupHtml);
+      const popup = new mapboxgl.Popup({ offset: 8 }).setHTML(popupHtml);
         
       const marker = new mapboxgl.Marker({ element: circle })
         .setLngLat([lng, lat])
@@ -137,7 +145,7 @@ const App = () => {
       return marker;
     });
     setMarkers(newMarkers);
-  };    
+  };
 
   const handleCatClick = async (id) => {
     setActiveCategories((prev) => {
