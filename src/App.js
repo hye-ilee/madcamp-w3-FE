@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { rgba } from 'polished';
 import './App.css';
 
 mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
-console.log('Mapbox Access Token:', process.env.REACT_APP_MAPBOX_ACCESS_TOKEN);
 
 const projs = ['mercator', 'globe'];
 const styles = [
@@ -15,14 +15,14 @@ const styles = [
 ];
 
 const categories = [
-  { id: 'all', name: 'All', color: '#D26561' },
-  { id: 'general', name: 'General', color: '#4997B4' },
-  { id: 'business', name: 'Business', color: '#DA8A54' },
-  { id: 'health', name: 'Health', color: '#529952' },
-  { id: 'science', name: 'Science', color: '#9949B4' },
-  { id: 'technology', name: 'Technology', color: '#DF97C7' },
-  { id: 'sports', name: 'Sports', color: '#DDC850' },
-  { id: 'entertainment', name: 'Entertainment', color: '#4153C8' },
+  { id: 'all', name: 'All', color: rgba(210, 101, 97, 0.7) },
+  { id: 'general', name: 'General', color: rgba(73, 151, 180, 0.7)  },
+  { id: 'business', name: 'Business', color: rgba(218, 138, 84, 0.7) },
+  { id: 'health', name: 'Health', color: rgba(82, 153, 82, 0.7) },
+  { id: 'science', name: 'Science', color: rgba(153, 73, 180, 0.7) },
+  { id: 'technology', name: 'Technology', color: rgba(223, 151, 199, 0.7) },
+  { id: 'sports', name: 'Sports', color: rgba(221, 200, 80, 0.7) },
+  { id: 'entertainment', name: 'Entertainment', color: rgba(65, 83, 200, 0.7) },
 ];
 
 const App = () => {
@@ -62,15 +62,15 @@ const App = () => {
   };
 
   const fetchCategoryData = async (activeCategories) => {
-    const limit = 20; //카테고리 당 개수
+    const limit = 20;
     let url = '';
     if (activeCategories.includes('all')) {
       const total = limit * (categories.length - 1);
       url = `http://172.10.7.20:8000/api/news/news_geojson/?limit=${total}`;
     } else {
-      const total = limit * activeCategories.length;
       const categoryQuery = activeCategories.map((cat) => `category=${cat}`).join('&');
-      url = `http://172.10.7.20:8000/api/news/news_geojson/?${categoryQuery}&limit=${total}`;
+      console.log('categoryQuery:', categoryQuery);
+      url = `http://172.10.7.20:8000/api/news/news_geojson/?${categoryQuery}&limit=${limit}`; //카테고리 당 limit개
     }
   
     try {
@@ -78,7 +78,7 @@ const App = () => {
       const response = await fetch(url);
       const data = await response.json();
       console.log('Fetched data:', data);
-      return data.features; // GeoJSON 형태의 features 반환
+      return data.features; //GeoJSON 형태의 features 반환
     } catch (error) {
       console.error('Error fetching category data:', error);
       return [];
@@ -88,7 +88,6 @@ const App = () => {
   const updateMarkers = async () => {
     markers.forEach((marker) => marker.remove());
     setMarkers([]);
-    console.log('removed all prev markers, Active Categories:', activeCategories);
     if (activeCategories.length === 0) {
       console.log('No markers');
       return;
@@ -110,9 +109,32 @@ const App = () => {
     });
     const newMarkers = coloredFeatures.map((feature) => {
       const [lng, lat] = feature.geometry.coordinates;
-      return new mapboxgl.Marker({ color: feature.color, scale: 1.2 })
+      const circle = document.createElement('div');
+      const imp = feature.properties.importance;
+      circle.className = 'myMarker';
+      circle.style.width = imp + 'px';
+      circle.style.height = imp + 'px';
+      circle.style.borderRadius = '50%';
+      circle.style.backgroundColor = feature.color;
+
+      const popupHtml = `
+        <div style="min-width:150px;">
+          <h3 style="margin:5px 0;">${feature.properties.title}</h3>
+          <a href="${feature.properties.url}" 
+            target="_blank" 
+            rel="noopener noreferrer">
+            Go to link
+          </a>
+        </div>
+      `;
+      const popup = new mapboxgl.Popup({ offset: 8 })
+        .setHTML(popupHtml);
+        
+      const marker = new mapboxgl.Marker({ element: circle })
         .setLngLat([lng, lat])
+        .setPopup(popup)
         .addTo(map.current);
+      return marker;
     });
     setMarkers(newMarkers);
   };    
@@ -121,23 +143,17 @@ const App = () => {
     setActiveCategories((prev) => {
       if(id === 'all') {
         if (prev.includes('all')) {
-          const next = prev.filter((cat) => cat !== 'all');
-          console.log('ALL OFF =>', next);
-          return next;
+          return prev.filter((cat) => cat !== 'all');
         } else {
           return ['all'];
         }
       }
       //그외 카테고리
       if (prev.includes(id)) {
-        console.log('was on: ', id);
         const filtered = prev.filter((cat) => cat !== id);
-        console.log('TOGGLE OFF =>', filtered);
         return filtered.length ? filtered : [];
       } else {
-        const next = [...prev.filter((cat) => cat !== 'all'), id];
-        console.log('TOGGLE ON =>', next);
-        return next;
+        return [...prev.filter((cat) => cat !== 'all'), id];
       }
     });
   };

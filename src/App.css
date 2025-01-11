@@ -89,3 +89,7 @@ body {
   color: white; /* 활성 상태의 텍스트 색상 */
   font-weight: bold;
 }
+
+.mapboxgl-marker > div.myMarker {
+  opacity: 0.7 !important;
+}
