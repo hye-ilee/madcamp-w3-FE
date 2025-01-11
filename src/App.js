@@ -31,7 +31,7 @@ const App = () => {
   const [currentProjectionIndex, setCurrentProjectionIndex] = useState(1);
   const [currentStyleIndex, setCurrentStyleIndex] = useState(0);
   const [isLandingVisible, setIsLandingVisible] = useState(true);
-  const [activeCategories, setActiveCategories] = useState(['all']);
+  const [activeCategories, setActiveCategories] = useState([]);
   const [markers, setMarkers] = useState([]);
 
   useEffect(() => {
@@ -85,23 +85,12 @@ const App = () => {
     }
   };
 
-  const addMarkersToMap = (features) => {
-    markers.forEach((marker) => marker.remove());
-
-    const newMarkers = features.map((feature) => {
-      const [lng, lat] = feature.geometry.coordinates;
-      const marker = new mapboxgl.Marker({ color: feature.color, scale: 1.2 })
-        .setLngLat([lng, lat])
-        .addTo(map.current);
-      return marker;
-    });
-    setMarkers(newMarkers);
-  };
-
   const updateMarkers = async () => {
     markers.forEach((marker) => marker.remove());
     setMarkers([]);
+    console.log('removed all prev markers, Active Categories:', activeCategories);
     if (activeCategories.length === 0) {
+      console.log('No markers');
       return;
     }
     const featuresList = await fetchCategoryData(activeCategories);
@@ -111,7 +100,6 @@ const App = () => {
         const allCat = categories.find((cat) => cat.id === 'all');
         return { ...feature, color: allCat.color };
       }
-  
       const foundCat = categories.find(
         (cat) => activeCategories.includes(cat.id) && cat.id === feature.properties.category
       );
@@ -120,7 +108,6 @@ const App = () => {
       } 
       return feature;
     });
-  
     const newMarkers = coloredFeatures.map((feature) => {
       const [lng, lat] = feature.geometry.coordinates;
       return new mapboxgl.Marker({ color: feature.color, scale: 1.2 })
@@ -134,18 +121,23 @@ const App = () => {
     setActiveCategories((prev) => {
       if(id === 'all') {
         if (prev.includes('all')) {
-          return prev.filter((cat) => cat !== 'all');
+          const next = prev.filter((cat) => cat !== 'all');
+          console.log('ALL OFF =>', next);
+          return next;
         } else {
           return ['all'];
         }
       }
       //그외 카테고리
       if (prev.includes(id)) {
-        console.log('has no all:', id);
+        console.log('was on: ', id);
         const filtered = prev.filter((cat) => cat !== id);
+        console.log('TOGGLE OFF =>', filtered);
         return filtered.length ? filtered : [];
       } else {
-        return [...prev.filter((cat) => cat !== 'all'), id];
+        const next = [...prev.filter((cat) => cat !== 'all'), id];
+        console.log('TOGGLE ON =>', next);
+        return next;
       }
     });
   };
