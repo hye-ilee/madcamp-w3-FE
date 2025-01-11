@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
+import { rgba } from 'polished';
 import './App.css';
 
 mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
-// mapboxgl.accessToken = 'pk.eyJ1IjoiaGFycmlsZWUiLCJhIjoiY201cDE2Y2xuMGY5ZDJsb2tuanMzZnFkYSJ9.lyj7U89xkzXFnwu0Z-ojZQ';
-console.log('Mapbox Access Token:', process.env.REACT_APP_MAPBOX_ACCESS_TOKEN);
 
 const projs = ['mercator', 'globe'];
 const styles = [
@@ -15,14 +15,14 @@ const styles = [
 ];
 
 const categories = [
-  { id: 'all', name: 'All', color: '#D26561' },
-  { id: 'general', name: 'General', color: '#4997B4' },
-  { id: 'business', name: 'Business', color: '#DA8A54' },
-  { id: 'health', name: 'Health', color: '#529952' },
-  { id: 'science', name: 'Science', color: '#9949B4' },
-  { id: 'technology', name: 'Technology', color: '#DF97C7' },
-  { id: 'sports', name: 'Sports', color: '#DDC850' },
-  { id: 'entertainment', name: 'Entertainment', color: '#4153C8' },
+  { id: 'all', name: 'All', color: rgba(210, 101, 97, 0.7) },
+  { id: 'general', name: 'General', color: rgba(73, 151, 180, 0.7)  },
+  { id: 'business', name: 'Business', color: rgba(218, 138, 84, 0.7) },
+  { id: 'health', name: 'Health', color: rgba(82, 153, 82, 0.7) },
+  { id: 'science', name: 'Science', color: rgba(153, 73, 180, 0.7) },
+  { id: 'technology', name: 'Technology', color: rgba(223, 151, 199, 0.7) },
+  { id: 'sports', name: 'Sports', color: rgba(221, 200, 80, 0.7) },
+  { id: 'entertainment', name: 'Entertainment', color: rgba(65, 83, 200, 0.7) },
 ];
 
 const App = () => {
@@ -31,7 +31,8 @@ const App = () => {
   const [currentProjectionIndex, setCurrentProjectionIndex] = useState(1);
   const [currentStyleIndex, setCurrentStyleIndex] = useState(0);
   const [isLandingVisible, setIsLandingVisible] = useState(true);
-  const [activeCategories, setActiveCategories] = useState(['all']);
+  const [activeCategories, setActiveCategories] = useState([]);
+  const [markers, setMarkers] = useState([]);
 
   useEffect(() => {
     if (map.current) return; //이미 초기화된 경우 방지
@@ -42,7 +43,7 @@ const App = () => {
       zoom: 1.7,
       projection: projs[currentProjectionIndex],
     });
-  }, []); //초기화 시 한 번만 실행
+  }, []);
 
   useEffect(() => {
     if (!map.current) return;
@@ -50,33 +51,118 @@ const App = () => {
     map.current.setProjection(projs[currentProjectionIndex]);
   }, [currentProjectionIndex, currentStyleIndex]);
 
+  useEffect(() => {
+    updateMarkers();
+  }, [activeCategories]);
+
+
   const handleLandingClick = (e) => {
     e.stopPropagation();
     setIsLandingVisible(false);
   };
 
-  const handleCatClick = (id) => {
-    if (id === 'all') {
-      // "All" 버튼 클릭 시 다른 버튼 해제하고 "All"만 활성화
-      setActiveCategories(['all']);
+  const fetchCategoryData = async (activeCategories) => {
+    const limit = 20;
+    let url = '';
+    if (activeCategories.includes('all')) {
+      const total = limit * (categories.length - 1);
+      url = `http://172.10.7.20:8000/api/news/news_geojson/?limit=${total}`;
     } else {
-      // 일반 버튼 클릭 시 "All" 버튼 비활성화
-      setActiveCategories((prev) => {
-        const updated = prev.includes(id)
-          ? prev.filter((cat) => cat !== id) // 이미 활성화된 경우 비활성화
-          : [...prev.filter((cat) => cat !== 'all'), id];
-        return updated.length === 0 ? ['all'] : updated; // 아무것도 선택되지 않으면 "All" 활성화
-      });
+      const categoryQuery = activeCategories.map((cat) => `category=${cat}`).join('&');
+      console.log('categoryQuery:', categoryQuery);
+      url = `http://172.10.7.20:8000/api/news/news_geojson/?${categoryQuery}&limit=${limit}`; //카테고리 당 limit개
     }
+  
+    try {
+      console.log('fetching data from:', url);
+      const response = await fetch(url);
+      const data = await response.json();
+      console.log('Fetched data:', data);
+      return data.features; //GeoJSON 형태의 features 반환
+    } catch (error) {
+      console.error('Error fetching category data:', error);
+      return [];
+    }
+  };
+
+  const updateMarkers = async () => {
+    markers.forEach((marker) => marker.remove());
+    setMarkers([]);
+    if (activeCategories.length === 0) {
+      console.log('No markers');
+      return;
+    }
+    const featuresList = await fetchCategoryData(activeCategories);
+
+    const coloredFeatures = featuresList.map((feature) => {
+      if (activeCategories.includes('all')) {
+        const allCat = categories.find((cat) => cat.id === 'all');
+        return { ...feature, color: allCat.color };
+      }
+      const foundCat = categories.find(
+        (cat) => activeCategories.includes(cat.id) && cat.id === feature.properties.category
+      );
+      if (foundCat) {
+        return { ...feature, color: foundCat.color };
+      } 
+      return feature;
+    });
+    const newMarkers = coloredFeatures.map((feature) => {
+      const [lng, lat] = feature.geometry.coordinates;
+      const circle = document.createElement('div');
+      const imp = feature.properties.importance;
+      circle.className = 'myMarker';
+      circle.style.width = imp + 'px';
+      circle.style.height = imp + 'px';
+      circle.style.borderRadius = '50%';
+      circle.style.backgroundColor = feature.color;
+
+      const popupHtml = `
+        <div style="min-width:150px;">
+          <h3 style="margin:5px 0;">${feature.properties.title}</h3>
+          <a href="${feature.properties.url}" 
+            target="_blank" 
+            rel="noopener noreferrer">
+            Go to link
+          </a>
+        </div>
+      `;
+      const popup = new mapboxgl.Popup({ offset: 8 })
+        .setHTML(popupHtml);
+        
+      const marker = new mapboxgl.Marker({ element: circle })
+        .setLngLat([lng, lat])
+        .setPopup(popup)
+        .addTo(map.current);
+      return marker;
+    });
+    setMarkers(newMarkers);
+  };    
+
+  const handleCatClick = async (id) => {
+    setActiveCategories((prev) => {
+      if(id === 'all') {
+        if (prev.includes('all')) {
+          return prev.filter((cat) => cat !== 'all');
+        } else {
+          return ['all'];
+        }
+      }
+      //그외 카테고리
+      if (prev.includes(id)) {
+        const filtered = prev.filter((cat) => cat !== id);
+        return filtered.length ? filtered : [];
+      } else {
+        return [...prev.filter((cat) => cat !== 'all'), id];
+      }
+    });
   };
 
   return (
     <div>
       {isLandingVisible && (
-        <div
-          className={`landing ${!isLandingVisible ? 'hidden' : ''}`}
-          onClick={handleLandingClick}
-        >
+        <div className={`landing ${!isLandingVisible ? 'hidden' : ''}`}
+          onClick={handleLandingClick} >
           <h1>
           <span>Global news at a Glance,</span> <br />
           <span style={{ fontSize: '120px', fontWeight: 'bold'}}>Globance</span>
