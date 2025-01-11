@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import './App.css';
 
 mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
-// mapboxgl.accessToken = 'pk.eyJ1IjoiaGFycmlsZWUiLCJhIjoiY201cDE2Y2xuMGY5ZDJsb2tuanMzZnFkYSJ9.lyj7U89xkzXFnwu0Z-ojZQ';
 console.log('Mapbox Access Token:', process.env.REACT_APP_MAPBOX_ACCESS_TOKEN);
 
 const projs = ['mercator', 'globe'];
@@ -43,70 +43,54 @@ const App = () => {
       zoom: 1.7,
       projection: projs[currentProjectionIndex],
     });
-
-    map.current.on('load', () => {
-      console.log('Map has loaded:', map.current);
-      const marker1 = new mapboxgl.Marker()
-        .setLngLat([127.359245, 36.373794]) // 마커 좌표
-        .addTo(map.current); // 맵에 추가
-      console.log('Marker1 added:', marker1);
-    });
   }, []);
 
   useEffect(() => {
     if (!map.current) return;
     map.current.setStyle(styles[currentStyleIndex]);
     map.current.setProjection(projs[currentProjectionIndex]);
-    const features = fetchCategoryData('all');
-    console.log('features:', features);
-    // const loadAllMarkers = async () => {
-    //   const features = await fetchCategoryData('all');
-    //   addMarkersToMap(features, categories.find((cat) => cat.id === 'all').color);
-    // };
-    // loadAllMarkers();
-    // map.current.on('load', () => {
-    //   console.log('Map has loaded:', map.current);
-    //   const marker1 = new mapboxgl.Marker()
-    //     .setLngLat([127.359245, 36.373794]) // 마커 좌표
-    //     .addTo(map.current); // 맵에 추가
-    //   console.log('Marker1 added:', marker1);
-    // });
   }, [currentProjectionIndex, currentStyleIndex]);
+
+  useEffect(() => {
+    updateMarkers();
+  }, [activeCategories]);
+
 
   const handleLandingClick = (e) => {
     e.stopPropagation();
     setIsLandingVisible(false);
   };
 
-  const fetchCategoryData = async (category) => {
-    const limit = 20;
-    var url = '';
-    if(category == 'all') {
-      console.log('fetching all data');
-      const total = limit * (categories.length-1);
+  const fetchCategoryData = async (activeCategories) => {
+    const limit = 20; //카테고리 당 개수
+    let url = '';
+    if (activeCategories.includes('all')) {
+      const total = limit * (categories.length - 1);
       url = `http://172.10.7.20:8000/api/news/news_geojson/?limit=${total}`;
     } else {
-      url = `http://172.10.7.20:8000/api/news/news_geojson/?category=${category}&limit=${limit}`;
+      const total = limit * activeCategories.length;
+      const categoryQuery = activeCategories.map((cat) => `category=${cat}`).join('&');
+      url = `http://172.10.7.20:8000/api/news/news_geojson/?${categoryQuery}&limit=${total}`;
     }
+  
     try {
       console.log('fetching data from:', url);
       const response = await fetch(url);
       const data = await response.json();
-      console.log(data);
-      return data.features;
+      console.log('Fetched data:', data);
+      return data.features; // GeoJSON 형태의 features 반환
     } catch (error) {
       console.error('Error fetching category data:', error);
       return [];
     }
   };
 
-  const addMarkersToMap = (features, color) => {
-    markers.forEach((marker) => marker.remove());// 이전 마커 제거
+  const addMarkersToMap = (features) => {
+    markers.forEach((marker) => marker.remove());
+
     const newMarkers = features.map((feature) => {
-      // const [lng, lat] = [127.259839,37.166155];
       const [lng, lat] = feature.geometry.coordinates;
-      console.log('$', lng, lat);
-      const marker = new mapboxgl.Marker({ color, scale: 1.2,})
+      const marker = new mapboxgl.Marker({ color: feature.color, scale: 1.2 })
         .setLngLat([lng, lat])
         .addTo(map.current);
       return marker;
@@ -114,23 +98,56 @@ const App = () => {
     setMarkers(newMarkers);
   };
 
-  const handleCatClick = async (id) => {
-    if (id === 'all') {
-      setActiveCategories(['all']);
-      setMarkers([]);
-    } else {
-      console.log('why no marker');
-      // 일반 버튼 클릭 시 "All" 버튼 비활성화
-      setActiveCategories((prev) => {
-        const updated = prev.includes(id)
-          ? prev.filter((cat) => cat !== id) // 이미 활성화된 경우 비활성화
-          : [...prev.filter((cat) => cat !== 'all'), id];
-        return updated;
-      });
+  const updateMarkers = async () => {
+    markers.forEach((marker) => marker.remove());
+    setMarkers([]);
+    if (activeCategories.length === 0) {
+      return;
     }
-    const features = await fetchCategoryData(id);
-    console.log('features:', features);
-    addMarkersToMap(features, categories.find((cat) => cat.id === id).color);
+    const featuresList = await fetchCategoryData(activeCategories);
+
+    const coloredFeatures = featuresList.map((feature) => {
+      if (activeCategories.includes('all')) {
+        const allCat = categories.find((cat) => cat.id === 'all');
+        return { ...feature, color: allCat.color };
+      }
+  
+      const foundCat = categories.find(
+        (cat) => activeCategories.includes(cat.id) && cat.id === feature.properties.category
+      );
+      if (foundCat) {
+        return { ...feature, color: foundCat.color };
+      } 
+      return feature;
+    });
+  
+    const newMarkers = coloredFeatures.map((feature) => {
+      const [lng, lat] = feature.geometry.coordinates;
+      return new mapboxgl.Marker({ color: feature.color, scale: 1.2 })
+        .setLngLat([lng, lat])
+        .addTo(map.current);
+    });
+    setMarkers(newMarkers);
+  };    
+
+  const handleCatClick = async (id) => {
+    setActiveCategories((prev) => {
+      if(id === 'all') {
+        if (prev.includes('all')) {
+          return prev.filter((cat) => cat !== 'all');
+        } else {
+          return ['all'];
+        }
+      }
+      //그외 카테고리
+      if (prev.includes(id)) {
+        console.log('has no all:', id);
+        const filtered = prev.filter((cat) => cat !== id);
+        return filtered.length ? filtered : [];
+      } else {
+        return [...prev.filter((cat) => cat !== 'all'), id];
+      }
+    });
   };
 
   return (
