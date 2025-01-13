@@ -21,15 +21,15 @@ body {
 
 #projControl {
   position: absolute;
-  top: 100px;
-  left: 10px;
+  bottom: 10px;
+  left: 100px;
   z-index: 1;
 }
 
 #styleControl {
   position: absolute;
-  top: 140px;
-  left: 10px;
+  bottom: 10px;
+  left: 230px;
   z-index: 1;
 }
 
@@ -53,7 +53,7 @@ body {
 }
 
 .landing h1 {
-  font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', 'Palatino LT STD', Georgia, serif;
+  font-family: 'Book Antiqua';
   font-size: 70px;
   text-align: left;
   margin-left: 15px;
@@ -92,4 +92,68 @@ body {
 
 .mapboxgl-marker > div.myMarker {
   opacity: 0.7 !important;
+}
+
+#newsList {
+  margin: 10px;
+}
+
+.newsIcon {
+  background-color: transparent;
+  color: gray;
+  border: none;
+  cursor: pointer;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+}
+
+.newsIcon i {
+  font-family: 'Material Icons';
+  font-size: 30px;
+  vertical-align: middle; /* 아이콘 정렬 */
+}
+
+.news-items {
+  list-style-type: none;
+  padding: 10px;
+  margin: 50px 0 10px 0;
+  background-color: #d9d9d9;
+  border:none;
+  border-radius: 30%;
+  border-radius: 5px;
+  max-width: 400px;
+  max-height: 800px;
+  overflow-y: auto;
+}
+
+.news-items li {
+  margin-bottom: 10px;
+  border-bottom: 5px dotted whitesmoke;
+}
+
+.news-items li:last-child {
+  border-bottom: none; /* 마지막 아이템에는 구분선 제거 */
+}
+
+.news-items li h3 {
+  margin: 0;
+  color: black;
+  font-size: 16px;
+}
+
+.news-items li p {
+  margin: 0;
+  color: gray;
+  font-size: 12px;
+}
+
+.news-items li a {
+  color: #0074d9;
+  text-decoration: none;
+}
+
+.news-items li:hover {
+  text-decoration: underline;
 }

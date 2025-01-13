@@ -33,6 +33,8 @@ const App = () => {
   const [isLandingVisible, setIsLandingVisible] = useState(true);
   const [activeCategories, setActiveCategories] = useState([]);
   const [markers, setMarkers] = useState([]);
+  const [isListVisible, setIsListVisible] = useState(false);
+  const [newsList, setNewsList] = useState([]);
 
   useEffect(() => {
     if (map.current) return; //이미 초기화된 경우 방지
@@ -55,6 +57,13 @@ const App = () => {
     updateMarkers();
   }, [activeCategories]);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      const data = await fetchCategoryData(activeCategories);
+      setNewsList(data);
+    };
+    fetchData();
+  }, [activeCategories]);
 
   const handleLandingClick = (e) => {
     e.stopPropagation();
@@ -166,6 +175,10 @@ const App = () => {
     });
   };
 
+  const handleListClick = async () => {
+    setIsListVisible((prev) => !prev);
+  };
+
   return (
     <div>
       {isLandingVisible && (
@@ -206,6 +219,22 @@ const App = () => {
             {cat.name}
           </button>
         ))}
+      </div>
+      <div className="newsIcon">
+        <button className="newsIcon" onClick={handleListClick}><i className="material-icons">menu</i></button>
+        {isListVisible && (
+          <ul className="news-items">
+            {newsList.map((item, index) => (
+              <li key={index}>
+                <h3>{item.properties.title}</h3>
+                <p>{item.properties.description} #{item.properties.category}</p>
+                <a href={item.properties.url} target="_blank" rel="noopener noreferrer">
+                  Read more
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
       <div id="map" ref={mapContainer} style={{ width: '100%', height: '100vh' }}></div>
     </div>
