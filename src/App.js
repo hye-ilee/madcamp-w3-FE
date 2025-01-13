@@ -107,7 +107,7 @@ const App = () => {
     }
   };
 
-  const updateMarkers = async () => {
+  const updateMarkers = async () => {//기존
     markers.forEach((marker) => marker.remove());
     setMarkers([]);
     allPopups.current = [];
@@ -117,7 +117,7 @@ const App = () => {
       return;
     }
     const featuresList = await fetchCategoryData(activeCategories);
-    console.log('Fetched featuresList:', featuresList);
+  
     const coloredFeatures = featuresList.map((feature) => {
       if (activeCategories.includes('all')) {
         const allCat = categories.find((cat) => cat.id === 'all');
@@ -299,7 +299,13 @@ const App = () => {
                 </div>
                 <div className="news-item-image">
                   {item.properties.preview_image ? (
-                    <img src={item.properties.preview_image} alt={item.properties.title} />
+                    <img src={item.properties.preview_image} alt={item.properties.title}
+                      style={{
+                        width: '100px',
+                        height: '100px',
+                        objectFit: 'cover',
+                        display: 'block',
+                      }}/>
                   ) : (
                     <div></div> /* placeholder */
                   )}
