@@ -35,6 +35,9 @@ const App = () => {
   const [markers, setMarkers] = useState([]);
   const [isListVisible, setIsListVisible] = useState(false);
   const [newsList, setNewsList] = useState([]);
+  const coordsDict = useRef({});
+  const markerDict = useRef({});
+  const allPopups = useRef([]);
 
   useEffect(() => {
     if (map.current) return; //이미 초기화된 경우 방지
@@ -70,6 +73,16 @@ const App = () => {
     setIsLandingVisible(false);
   };
 
+  const handleProjClick = (e) => {
+    e.stopPropagation();
+    setCurrentProjectionIndex((prev) => (prev + 1) % projs.length);
+  };
+  
+  const handleStyleChange = (e) => {
+    e.stopPropagation();
+    setCurrentStyleIndex(parseInt(e.target.value, 10));
+  };
+
   const fetchCategoryData = async (activeCategories) => {
     const limit = 20;
     let url = '';
@@ -97,6 +110,8 @@ const App = () => {
   const updateMarkers = async () => {
     markers.forEach((marker) => marker.remove());
     setMarkers([]);
+    allPopups.current = [];
+
     if (activeCategories.length === 0) {
       console.log('No markers');
       return;
@@ -117,7 +132,7 @@ const App = () => {
       return feature;
     });
     
-    const coordsDict = coloredFeatures.reduce((acc, feature) => {
+    coordsDict.current = coloredFeatures.reduce((acc, feature) => {
       const coordKey = feature.geometry.coordinates?.join(',');
       if (!acc[coordKey]) {
         acc[coordKey] = [];
@@ -137,23 +152,56 @@ const App = () => {
       circle.style.backgroundColor = feature.color;
 
       const coordKey = feature.geometry.coordinates?.join(',');
-      const popupHtml = `
+      const popupHtml = Object.values(coordsDict.current[coordKey]).length <= 2 ? `
         <div style="min-width:150px;">
-          ${Object.values(coordsDict[coordKey]).map((feat) => `
+          ${Object.values(coordsDict.current[coordKey]).map((feat) => `
             <h3 style="margin:5px 0;">${feat.properties.title}</h3>
             <a href="${feat.properties.url}" target="_blank" rel="noopener noreferrer">Go to link</a>
           `).join('<hr />')}
         </div>
+      ` : `
+        <div style="min-width:150px;">
+          ${Object.values(coordsDict.current[coordKey]).slice(0,2).map((feat) => `
+            <h3 style="margin:5px 0;">${feat.properties.title}</h3>
+            <a href="${feat.properties.url}" target="_blank" rel="noopener noreferrer">Go to link</a>
+          `).join('<hr />')}
+        </div>
+        <button style="margin-top:5px;" onclick="window.showLongPopup('${coordKey}')">View all issues in this area</button>
       `;
       const popup = new mapboxgl.Popup({ offset: 8 }).setHTML(popupHtml);
-        
+      console.log('just popup:', popup);
       const marker = new mapboxgl.Marker({ element: circle })
         .setLngLat([lng, lat])
         .setPopup(popup)
         .addTo(map.current);
+      markerDict.current[`${lng.toFixed(5)},${lat.toFixed(5)}`] = {marker, popup};
+      allPopups.current.push(popup);
       return marker;
     });
     setMarkers(newMarkers);
+    console.log('Final markerDict:', markerDict.current);
+  };
+
+  window.showLongPopup = (coordKey) => {
+    const features = coordsDict.current[coordKey]; // 해당 좌표의 모든 데이터
+    const [lng, lat] = coordKey.split(',').map(Number);
+  
+    const longPopupHtml = `
+      <div style="max-height: 300px; overflow-y: auto; min-width: 300px;">
+        ${features.map((feat) => `
+          <h3>${feat.properties.title}</h3>
+          <p>${feat.properties.description}</p>
+          <a href="${feat.properties.url}" target="_blank" rel="noopener noreferrer">Read more</a>
+          <hr />
+        `).join('')}
+      </div>
+    `;
+  
+    const longPopup = new mapboxgl.Popup({ offset: 8, maxWidth: '400px' })
+      .setLngLat([lng, lat])
+      .setHTML(longPopupHtml)
+      .addTo(map.current);
+      allPopups.current.push(longPopup);
   };
 
   const handleCatClick = async (id) => {
@@ -179,6 +227,24 @@ const App = () => {
     setIsListVisible((prev) => !prev);
   };
 
+  const handleFlyto = async (dest) => {
+    const [lng, lat] = dest;
+    const key = `${lng.toFixed(5)},${lat.toFixed(5)}`; //작은 따옴표 아니고 백틱
+    allPopups.current.forEach((popup) => {
+      if(popup !== markerDict.current[key].popup) {
+        popup.remove();
+      }
+    });
+    map.current.flyTo({ center: [lng, lat], zoom: 8, duration: 1500 });
+    setTimeout(() => {
+      if(markerDict.current[key] && !markerDict.current[key].popup.isOpen()) {
+        markerDict.current[key].popup.addTo(map.current);
+      }else {
+        console.log('No popup found for key:', key);
+      }
+    }, 1500);
+  };
+
   return (
     <div>
       {isLandingVisible && (
@@ -191,14 +257,14 @@ const App = () => {
         </div>
       )}
       <div id="projControl">
-        <button onClick={(e) => e.stopPropagation() || setCurrentProjectionIndex((prev) => (prev + 1) % projs.length)}>
+        <button onClick={handleProjClick}>
           Switch Projection
         </button>
       </div>
       <div id="styleControl">
         <select
           id="styleDropdown"
-          onChange={(e) => e.stopPropagation() || setCurrentStyleIndex(parseInt(e.target.value, 10))}
+          onChange={handleStyleChange}
         >
           <option value="0">Standard</option>
           <option value="1">Satellite</option>
@@ -226,11 +292,18 @@ const App = () => {
           <ul className="news-items">
             {newsList.map((item, index) => (
               <li key={index}>
-                <h3>{item.properties.title}</h3>
-                <p>{item.properties.description} #{item.properties.category}</p>
-                <a href={item.properties.url} target="_blank" rel="noopener noreferrer">
-                  Read more
-                </a>
+                <div className="news-item-header" onClick={() => handleFlyto(item.geometry.coordinates)}>
+                  <h3>{item.properties.title}</h3>
+                  <p>{item.properties.description} #{item.properties.category}</p>
+                  <a href={item.properties.url} target="_blank" rel="noopener noreferrer">Read more</a>
+                </div>
+                <div className="news-item-image">
+                  {item.properties.preview_image ? (
+                    <img src={item.properties.preview_image} alt={item.properties.title} />
+                  ) : (
+                    <div></div> /* placeholder */
+                  )}
+                </div>
               </li>
             ))}
           </ul>

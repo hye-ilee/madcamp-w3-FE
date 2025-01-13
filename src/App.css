@@ -1,12 +1,3 @@
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 body {
   margin: 0;
   padding: 0;
@@ -21,16 +12,28 @@ body {
 
 #projControl {
   position: absolute;
-  bottom: 10px;
-  left: 100px;
-  z-index: 1;
+  top: 10px;
+  right: 70px;
+  z-index: 3;
 }
 
 #styleControl {
   position: absolute;
-  bottom: 10px;
-  left: 230px;
-  z-index: 1;
+  top: 10px;
+  right: 220px;
+  z-index: 3;
+}
+
+#projControl button, #styleControl select {
+  background-color: white;
+  color: black;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 15px;
+  margin: 0 5px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
 .landing {
@@ -100,11 +103,11 @@ body {
 
 .newsIcon {
   background-color: transparent;
-  color: gray;
+  color: #696A6C;
   border: none;
   cursor: pointer;
   position: absolute;
-  top: 10px;
+  top: 6px;
   right: 10px;
   z-index: 2;
 }
@@ -115,26 +118,45 @@ body {
   vertical-align: middle; /* 아이콘 정렬 */
 }
 
-.news-items {
+/* .news-items {
   list-style-type: none;
   padding: 10px;
   margin: 50px 0 10px 0;
   background-color: #d9d9d9;
   border:none;
   border-radius: 30%;
-  border-radius: 5px;
+  
   max-width: 400px;
+  max-height: 800px;
+  overflow-y: auto;
+} */
+
+.news-items {
+  list-style: none;
+  background-color: #d9d9d9;
+  border-radius: 5px;
+  padding: 0;
+  margin-top: 50px;
+  max-width: 600px;
   max-height: 800px;
   overflow-y: auto;
 }
 
 .news-items li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* 글div와 이미지div 양쪽 정렬 */
+  padding: 10px;
   margin-bottom: 10px;
   border-bottom: 5px dotted whitesmoke;
 }
 
 .news-items li:last-child {
   border-bottom: none; /* 마지막 아이템에는 구분선 제거 */
+}
+
+.news-items-header {
+  flex: 1;
 }
 
 .news-items li h3 {
@@ -156,4 +178,26 @@ body {
 
 .news-items li:hover {
   text-decoration: underline;
+}
+
+.news-items-image {
+  background-color: #d9d9d9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 10px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.news-items-image img {
+  max-width: 100% !important;
+  max-height: 100% !important;
+  /* object-fit: cover; */
+}
+
+img {
+  max-width: 150px;
+  height: auto;
+  display: block;
 }
