@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { rgba } from 'polished';
@@ -129,7 +129,7 @@ const App = () => {
     });
   };
 
-  const fetchCategoryData = async (activeCategories) => {
+  const fetchCategoryData = useCallback(async (activeCategories) => {
     const limit = 20;
     let url = '';
     if (activeCategories.includes('all')) {
@@ -151,7 +151,7 @@ const App = () => {
       console.error('Error fetching category data:', error);
       return [];
     }
-  };
+  }, []);
 
   return (
     <div>

@@ -1,70 +1,49 @@
-# Getting Started with Create React App
+# Globance 🗺️
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## 개요 📝
+Global news at a Glance, **Globance**는 글로벌 이슈들을 한눈에 볼 수 있도록 한 웹 서비스 입니다.
+지구본 또는 세계 지도 위에 일곱 카테고리의 글로벌 이슈들이 중요도에 따라 크고 작은 원으로 나타납니다.
+---
 
-## Available Scripts
+## 서비스 구성 🔍
 
-In the project directory, you can run:
+### 1. **랜딩 페이지**
+- Globance 이름과 그 뜻이 보이고, 아래 레이어에 천천히 돌아가고 있는 우리 행성 지구가 보입니다.
+- 한번 클릭하면 회전이 서서히 멈춥니다.
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/fcb07558-a055-485c-9078-a1b20bdefc5c" width="300">
+</p>
 
-### `npm start`
+### 2. **프로젝션과 지도 스타일**
+- 디폴트로 globe 프로젝션과 satellite 스타일이 설정되어있고,
+  - 프로젝션은 globe와 평면 지도인 mercator, 스타일은 Mapbox에서 지원하는 여러 스타일 중 satellite, dark, navigation-night가 드롭다운에서 선택 가능합니다.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### 3. **7개의 카테고리**
+- 백엔드에서 News API를 이용해 매일 새로운 글로벌 이슈들을 크롤링하고 NLP 모델을 이용해 요약 및 위치 정보 추출을 수행해 DB에 저장하며,
+이를 7개의 카테고리(general, business, health, science, technology, sports, entertainment)마다 각각 다른 색의 마커로 지도 상에 표현합니다.
+  - 반투명한 색으로 설정해 여러 이슈들의 위치가 중복되면 색이 더 진하게 나타납니다.
+  - 마커를 클릭하면 팝업을 통해 해당 위치의 모든 이슈 헤드라인과 기사 링크를 볼 수 있습니다.
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/784f7f50-9487-48ad-9d68-afb1c39a84dc" width="300">
+</p>
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### 4. **뉴스 스탠드**
+- 현재 활성화된 카테고리들의 이슈들은 마커 외에도 상단 우측의 메뉴 버튼을 클릭해 list로 나열된 형태로 볼 수 있습니다.
+    - preview image가 있는 기사는 list 안에 이미지도 보이고, Read more를 누르면 기사 링크로 연결됩니다.
+    - 이들 또한 각 list item을 클릭하면 해당 마커로 지도가 이동하고, 팝업이 자동으로 열립니다.
 
-### `npm test`
+---
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## 레퍼런스 📚
+- **지도:** Mapbox-gl-js
+- **뉴스 데이터:** News API
+---
 
-### `npm run build`
+## 팀원 👥
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+| 이름   | 소속             | 이메일                  | Github ID                               | 
+|------|----------------|----------------------|-----------------------------------------|
+| 이혜리  | KAIST 전산학부  | harriet@kaist.ac.kr  | [hye-ilee](https://github.com/hye-ilee) | 
+| 박세준  | KAIST 전산학부  | sejun0601@kaist.ac.kr | [sejun0601](https://github.com/sejun0601) | 
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+<br>
