@@ -4,11 +4,15 @@ const NewsList = ({ newsList, setNewsList, isListVisible, setIsListVisible, map,
     useEffect(() => {
         const fetchData = async () => {
             if (activeCategories.length === 0) {
-                setNewsList([]); // activeCategories가 비어있으면 리스트를 빈 상태로 설정
+                setNewsList([]);
                 return;
             }
-            const data = await fetchCategoryData(activeCategories);
-            setNewsList(data);
+            try {
+                const data = await fetchCategoryData(activeCategories);
+                setNewsList(data);
+            } catch (error) {
+                console.error('Error fetching category data:', error);
+            }
         };
         fetchData();
     }, [activeCategories, fetchCategoryData, setNewsList]);
