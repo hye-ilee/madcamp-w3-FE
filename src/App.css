@@ -13,19 +13,19 @@ body {
 #projControl {
   position: absolute;
   top: 10px;
-  right: 70px;
+  right: 120px;
   z-index: 3;
 }
 
 #styleControl {
   position: absolute;
   top: 10px;
-  right: 220px;
+  right: 270px;
   z-index: 3;
 }
 
 #projControl button, #styleControl select {
-  background-color: white;
+  background-color: lightgray;
   color: black;
   border: none;
   border-radius: 10px;
@@ -34,6 +34,23 @@ body {
   font-size: 14px;
   cursor: pointer;
   transition: background-color 0.3s ease;
+}
+
+.homeIcon {
+  position: absolute;
+  background-color: transparent;
+  color: gray;
+  border: none;
+  cursor: pointer;
+  top: 13px;
+  right: 70px;
+  z-index: 3;
+}
+
+.homeIcon i {
+  font-family: 'Material Icons';
+  font-size: 30px;
+  vertical-align: middle;
 }
 
 .landing {
@@ -103,11 +120,11 @@ body {
 
 .newsIcon {
   background-color: transparent;
-  color: #696A6C;
+  color: gray;
   border: none;
   cursor: pointer;
   position: absolute;
-  top: 6px;
+  top: 6.5px;
   right: 10px;
   z-index: 2;
 }
@@ -127,6 +144,22 @@ body {
   max-width: 600px;
   max-height: 800px;
   overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+.news-items::-webkit-scrollbar {
+  width: 8px;
+  background-color: #d9d9d9;
+  border-radius: 5px;
+}
+
+.news-items::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 4px;
+}
+
+.news-items::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
 }
 
 .news-items li {
@@ -175,13 +208,11 @@ body {
   align-items: center;
   justify-content: center;
   margin-left: 10px;
-  /* flex-shrink: 0; */
   overflow: hidden;
   position: relative;
 }
 
 .news-items-image img {
-  /* object-fit: cover !important; */
   display: block;
 }
 
@@ -189,4 +220,43 @@ img {
   max-width: 150px;
   object-fit: cover;
   display: block;
+}
+
+.weekly-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  overflow: hidden;
+  white-space: nowrap;
+  z-index: 2;
+  font-size: 16px;
+  padding: 10px;
+}
+
+.weekly-news {
+  display: inline-block;
+  padding-left: 100%;
+  animation: movingSummary 1500s linear infinite;
+}
+
+@keyframes movingSummary {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.mapboxgl-ctrl-logo {
+  position: absolute !important;
+  bottom: 50px !important;
+  right: auto !important;
+}
+
+.mapboxgl-ctrl-attrib {
+  bottom: 200px !important;
 }
